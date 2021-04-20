@@ -1,0 +1,44 @@
+import React from 'react';
+import PropTypes from 'prop-types';
+import { Route, Redirect } from 'react-router-dom';
+
+import AuthLayout from '~/pages/_layouts/auth';
+import DefaultLayout from '~/pages/_layouts/default';
+import { useAuth } from '~/hooks/Auth';
+
+const RouteWrapper = ({ component: Component, isPrivate = false, ...rest }) => {
+  const { user, token } = useAuth();
+
+  if ((!user && isPrivate) || (!token && isPrivate)) {
+    return <Redirect to="/" />;
+  }
+
+  if ((user && !isPrivate) || (token && !isPrivate)) {
+    return <Redirect to="/dashboard" />;
+  }
+
+  const Layout = user && token ? DefaultLayout : AuthLayout;
+
+  return (
+    <Route
+      {...rest}
+      render={props => (
+        <Layout>
+          <Component {...props} />
+        </Layout>
+      )}
+    />
+  );
+};
+
+RouteWrapper.propTypes = {
+  isPrivate: PropTypes.bool,
+  component: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+};
+
+RouteWrapper.defaultProps = {
+  isPrivate: false,
+  component: null,
+};
+
+export default RouteWrapper;
